@@ -7,9 +7,8 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.panda.ai.api.R
 import com.panda.ai.api.models.ChatMessage
-import io.noties.markwon.Markwon
 
-class ChatAdapter(private val markwon: Markwon) : RecyclerView.Adapter<ChatAdapter.VH>() {
+class ChatAdapter : RecyclerView.Adapter<ChatAdapter.VH>() {
 
     private val messages = mutableListOf<ChatMessage>()
 
@@ -47,12 +46,7 @@ class ChatAdapter(private val markwon: Markwon) : RecyclerView.Adapter<ChatAdapt
     }
 
     override fun onBindViewHolder(holder: VH, position: Int) {
-        val msg = messages[position]
-        if (msg.isUser()) {
-            holder.text.text = msg.content
-        } else {
-            markwon.setMarkdown(holder.text, msg.content)
-        }
+        holder.text.text = messages[position].content
     }
 
     override fun getItemCount(): Int = messages.size

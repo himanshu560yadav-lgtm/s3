@@ -15,7 +15,6 @@ import com.panda.ai.api.models.AgentActionResult
 import com.panda.ai.api.models.ChatMessage
 import com.panda.ai.api.services.*
 import com.panda.ai.api.ui.ChatAdapter
-import io.noties.markwon.Markwon
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
@@ -28,8 +27,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var actionHandler: ActionHandler
     private lateinit var voiceService: VoiceService
     private lateinit var telegramService: TelegramService
-    private lateinit var markwon: Markwon
-
     private val messages = mutableListOf<ChatMessage>()
     private var mode = "chat"
     private var sessionId = System.currentTimeMillis().toString()
@@ -47,7 +44,6 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        markwon = Markwon.create(this)
         aiService = AiService().apply { init(getPreferences(MODE_PRIVATE)) }
         actionHandler = ActionHandler(this)
         voiceService = VoiceService(this).apply { init() }
