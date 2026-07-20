@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.provider.Settings
+import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import androidx.core.os.bundleOf
 import java.util.Locale
@@ -15,7 +16,7 @@ class ScreenAutomationService : AccessibilityService() {
     override fun onServiceConnected() {
         super.onServiceConnected()
         serviceInfo = (serviceInfo ?: AccessibilityServiceInfo()).apply {
-            eventTypes = AccessibilityServiceInfo.TYPE_ALL_MASK
+            eventTypes = AccessibilityEvent.TYPE_ALL_MASK
             feedbackType = AccessibilityServiceInfo.FEEDBACK_GENERIC
             flags = (flags
                 or AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS
