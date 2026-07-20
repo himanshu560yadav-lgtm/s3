@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">PrivateAgent</string>
+    <string name="accessibility_description">PrivateAgent Screen Control lets the assistant interact with your screen to perform tasks on your behalf.</string>
 </resources>

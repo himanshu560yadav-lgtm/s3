@@ -9,11 +9,13 @@
         <item name="colorOnSurface">@color/light_on_surface</item>
         <item name="colorOnPrimary">@color/white</item>
         <item name="colorError">@color/red</item>
+        <item name="colorBackground">@color/light_bg</item>
     </style>
 
     <!-- Light values -->
     <style name="Theme.PrivateAgent.Light" parent="Theme.PrivateAgent">
         <item name="android:colorBackground">@color/light_bg</item>
+        <item name="colorBackground">@color/light_bg</item>
         <item name="colorSurface">@color/light_surface</item>
         <item name="colorOnSurface">@color/light_on_surface</item>
     </style>
@@ -22,6 +24,7 @@
     <style name="Theme.PrivateAgent.Dark" parent="Theme.PrivateAgent">
         <item name="colorPrimary">@color/indigo_500</item>
         <item name="android:colorBackground">@color/dark_bg</item>
+        <item name="colorBackground">@color/dark_bg</item>
         <item name="colorSurface">@color/dark_surface</item>
         <item name="colorOnSurface">@color/dark_on_surface</item>
     </style>
