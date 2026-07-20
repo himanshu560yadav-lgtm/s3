@@ -35,7 +35,7 @@ class SettingsActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         aiService = AiService().apply { init(getPreferences(MODE_PRIVATE)) }
-        telegramService = TelegramService(this) {}.apply { init(getPreferences(MODE_PRIVATE)) }
+        telegramService = TelegramService(this) { _, _ -> }.apply { init(getPreferences(MODE_PRIVATE)) }
 
         binding.topBar.setNavigationOnClickListener { finish() }
 
