@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="?attr/colorBackground">
+
+    <!-- Stepper -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingStart="32dp"
+        android:paddingEnd="32dp"
+        android:paddingTop="24dp"
+        android:paddingBottom="8dp">
+
+        <View android:id="@+id/step0" android:layout_width="0dp" android:layout_height="6dp" android:layout_weight="1" android:background="?attr/colorPrimary" android:layout_marginEnd="4dp"/>
+        <View android:id="@+id/step1" android:layout_width="0dp" android:layout_height="6dp" android:layout_weight="1" android:background="@color/light_border" android:layout_marginEnd="4dp"/>
+        <View android:id="@+id/step2" android:layout_width="0dp" android:layout_height="6dp" android:layout_weight="1" android:background="@color/light_border" android:layout_marginStart="4dp"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingStart="32dp"
+        android:paddingEnd="32dp">
+
+        <TextView android:id="@+id/lblStep0" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Welcome" android:textStyle="bold"/>
+        <TextView android:id="@+id/lblStep1" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Permissions"/>
+        <TextView android:id="@+id/lblStep2" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="AI Setup"/>
+    </LinearLayout>
+
+    <FrameLayout
+        android:id="@+id/pageContainer"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"/>
+</LinearLayout>

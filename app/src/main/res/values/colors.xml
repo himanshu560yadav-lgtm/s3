@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Brand -->
+    <color name="indigo_600">#4F46E5</color>
+    <color name="indigo_500">#6366F1</color>
+    <color name="sky_500">#0EA5E9</color>
+    <color name="sky_400">#38BDF8</color>
+
+    <!-- Light theme -->
+    <color name="light_bg">#F8FAFC</color>
+    <color name="light_on_surface">#1E293B</color>
+    <color name="light_surface">#FFFFFF</color>
+    <color name="light_surface_container">#F1F5F9</color>
+    <color name="light_border">#E2E8F0</color>
+    <color name="light_subtext">#64748B</color>
+
+    <!-- Dark theme -->
+    <color name="dark_bg">#0B0F19</color>
+    <color name="dark_on_surface">#F8FAFC</color>
+    <color name="dark_surface">#151D30</color>
+    <color name="dark_surface_container">#1E293B</color>
+    <color name="dark_border">#243049</color>
+    <color name="dark_subtext">#94A3B8</color>
+
+    <color name="green">#22C55E</color>
+    <color name="red">#EF4444</color>
+    <color name="orange">#F59E0B</color>
+</resources>
