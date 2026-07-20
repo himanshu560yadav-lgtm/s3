@@ -420,16 +420,34 @@ Answer questions, explain concepts, brainstorm, write emails/messages, and chat 
             }
             if (trimmed.startsWith("{") && !trimmed.endsWith("}")) trimmed += "\n}"
             if (trimmed.startsWith("{") && trimmed.contains("\"action\"")) {
-                val json = JSONObject(trimmed)
-                if (json.has("action")) {
-                    val paramsObj = json.optJSONObject("params")
-                    val params = mutableMapOf<String, Any?>()
-                    paramsObj?.keys()?.forEach { params[it] = paramsObj.get(it) }
-                    return AgentAction(
-                        action = json.optString("action", "general_query"),
-                        params = params,
-                        response = json.optString("response", "")
-                    )
+                try {
+                    val json = JSONObject(trimmed)
+                    if (json.has("action")) {
+                        val paramsObj = json.optJSONObject("params")
+                        val params = mutableMapOf<String, Any?>()
+                        paramsObj?.keys()?.forEach { params[it] = paramsObj.get(it) }
+                        return AgentAction(
+                            action = json.optString("action", "general_query"),
+                            params = params,
+                            response = json.optString("response", "")
+                        )
+                    }
+                } catch (e: Exception) {
+                    // Deeply truncated JSON — try adding another closing brace.
+                    if (e.toString().contains("End of input") || e.toString().contains("end of input")) {
+                        val fixed = trimmed + "\n}"
+                        val json = JSONObject(fixed)
+                        if (json.has("action")) {
+                            val paramsObj = json.optJSONObject("params")
+                            val params = mutableMapOf<String, Any?>()
+                            paramsObj?.keys()?.forEach { params[it] = paramsObj.get(it) }
+                            return AgentAction(
+                                action = json.optString("action", "general_query"),
+                                params = params,
+                                response = json.optString("response", "")
+                            )
+                        }
+                    }
                 }
             }
             null
@@ -452,15 +470,21 @@ Answer questions, explain concepts, brainstorm, write emails/messages, and chat 
             val models = if (data.has("data")) {
                 val list = data.getJSONArray("data")
                 (0 until list.length()).map { list.getJSONObject(it).getString("id") }
-            } else if (data is JSONArray) {
-                (0 until data.length()).map { data.getJSONObject(it).getString("id") }
             } else emptyList()
 
             if (isNvidiaBaseUrl(clean)) return@withContext filterNvidiaFreeModels(models)
             return@withContext models.sorted()
         } catch (e: Exception) {
-            Log.e("AiService", "Error fetching models: $e")
-            emptyList()
+            // The response was not a JSON object (e.g. a top-level JSON array of models).
+            try {
+                val arr = org.json.JSONArray(text)
+                val models = (0 until arr.length()).map { arr.getJSONObject(it).getString("id") }
+                if (isNvidiaBaseUrl(clean)) return@withContext filterNvidiaFreeModels(models)
+                return@withContext models.sorted()
+            } catch (e2: Exception) {
+                Log.e("AiService", "Error fetching models: $e")
+                emptyList()
+            }
         }
     }
 }

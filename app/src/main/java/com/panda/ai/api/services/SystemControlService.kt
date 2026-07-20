@@ -29,4 +29,18 @@ object SystemControlService {
             } else "Brightness permission not granted"
         } catch (e: Exception) { "Could not set brightness: $e" }
     }
+
+    fun getVolume(context: Context): Int {
+        return try {
+            val am = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+            val max = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+            if (max == 0) -1 else (am.getStreamVolume(AudioManager.STREAM_MUSIC) * 100 / max)
+        } catch (e: Exception) { -1 }
+    }
+
+    fun getBrightness(context: Context): Int {
+        return try {
+            Settings.System.getInt(context.contentResolver, Settings.System.SCREEN_BRIGHTNESS) * 100 / 255
+        } catch (e: Exception) { -1 }
+    }
 }

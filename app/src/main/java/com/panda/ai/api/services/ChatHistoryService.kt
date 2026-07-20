@@ -77,4 +77,40 @@ object ChatHistoryService {
     fun clearAll(context: Context) {
         file(context).delete()
     }
+
+    private fun overlayDir(context: Context): File {
+        return File(context.filesDir, "overlay_chat_handoff")
+    }
+
+    fun appendOverlayMessage(context: Context, message: Map<String, Any?>) {
+        try {
+            val dir = overlayDir(context)
+            dir.mkdirs()
+            val eventId = System.nanoTime()
+            val temporary = File(dir, "$eventId.tmp")
+            val event = File(dir, "$eventId.json")
+            temporary.writeText(JSONObject(message).toString())
+            temporary.renameTo(event)
+        } catch (e: Exception) { e.printStackTrace() }
+    }
+
+    fun consumeOverlayMessages(context: Context): List<Map<String, Any?>> {
+        try {
+            val dir = overlayDir(context)
+            if (!dir.exists()) return emptyList()
+            val files = dir.listFiles { f -> f.isFile && f.name.endsWith(".json") }
+                ?.sortedBy { it.name } ?: return emptyList()
+            val messages = mutableListOf<Map<String, Any?>>()
+            for (file in files) {
+                try {
+                    val decoded = JSONObject(file.readText())
+                    val map = mutableMapOf<String, Any?>()
+                    decoded.keys().forEach { map[it] = decoded.get(it) }
+                    messages.add(map)
+                    file.delete()
+                } catch (_: Exception) { /* leave for next sync */ }
+            }
+            return messages
+        } catch (e: Exception) { e.printStackTrace(); return emptyList() }
+    }
 }

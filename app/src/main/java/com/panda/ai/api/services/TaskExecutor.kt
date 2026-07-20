@@ -144,7 +144,7 @@ Rules:
 
             val prev = if (results.isNotEmpty()) "\nPREVIOUS ACTION RESULT: ${results.last()}\n" else ""
             val failureHint = if (consecutiveFailures >= 3)
-                "\n\nWARNING: You have failed $consecutiveFailures times in a row. Try a completely different action." else ""
+                "\n\nWARNING: You have failed $consecutiveFailures times in a row with the same approach. You MUST try a completely different action. If open_app failed, try press_home and look for the app icon on the home screen instead. If click_text failed, use click_at with coordinates. Do NOT repeat the same failed action." else ""
 
             val prompt = """TASK: $userGoal
 
@@ -207,9 +207,9 @@ Step ${step + 1}/${aiService.maxStepsValue}. What is the next action?"""
                 "click_text" -> { val t = params["text"] as? String ?: ""; success = ScreenAutomationService.clickByText(t); actionResult = if (success) "Clicked \"$t\"" else "Could not find \"$t\"" }
                 "click_at" -> { val x = (params["x"] as? Number)?.toDouble() ?: 0.0; val y = (params["y"] as? Number)?.toDouble() ?: 0.0; success = ScreenAutomationService.clickAt(x.toFloat(), y.toFloat()); actionResult = if (success) "Clicked at ($x, $y)" else "Click failed" }
                 "type_text" -> { val t = params["text"] as? String ?: ""; success = ScreenAutomationService.typeText(t, params["field_hint"] as? String); actionResult = if (success) "Typed \"$t\"" else "Could not type text" }
-                "press_enter" -> { success = ScreenAutomationService.pressEnter(); actionResult = if (success) "Submitted field" else "Could not submit" }
-                "swipe" -> { val sx=(params["startX"] as? Number)?.toFloat() ?:540f; val sy=(params["startY"] as? Number)?.toFloat() ?:2000f; val ex=(params["endX"] as? Number)?.toFloat() ?:540f; val ey=(params["endY"] as? Number)?.toFloat() ?:500f; success = ScreenAutomationService.swipe(sx,sy,ex,ey); actionResult = "Swiped" }
-                "scroll" -> { val d = params["direction"] as? String ?: "down"; success = ScreenAutomationService.scroll(d); actionResult = if (success) "Scrolled $d" else "Could not scroll" }
+                "press_enter" -> { success = submitKeyboardAction(); actionResult = if (success) "Submitted the focused search/form field" else "Could not submit the focused field" }
+                "swipe" -> { val sx=(params["startX"] as? Number)?.toDouble() ?:540.0; val sy=(params["startY"] as? Number)?.toDouble() ?:2000.0; val ex=(params["endX"] as? Number)?.toDouble() ?:540.0; val ey=(params["endY"] as? Number)?.toDouble() ?:500.0; success = performSwipe(sx,sy,ex,ey); actionResult = "Swiped from ($sx,$sy) to ($ex,$ey)" }
+                "scroll" -> { val d = params["direction"] as? String ?: "down"; success = performScroll(d); actionResult = if (success) "Scrolled $d" else "Could not scroll $d" }
                 "press_back" -> { success = ScreenAutomationService.pressBack(); actionResult = "Pressed back" }
                 "press_home" -> { success = ScreenAutomationService.pressHome(); actionResult = "Pressed home" }
                 "open_app" -> { val an = params["app_name"] as? String ?: ""; actionResult = AppLauncherService.openApp(context, an); success = actionResult.startsWith("Opened") }
@@ -221,7 +221,7 @@ Step ${step + 1}/${aiService.maxStepsValue}. What is the next action?"""
                     SkillMemoryService.saveSkill(context, userGoal, executedSteps)
                     ScreenAutomationService.showToast(context, "Task Complete!")
                     delay(4000)
-                    return reasoning.ifEmpty { "Done." }
+                    return if (reasoning.trim().isEmpty()) "Done." else reasoning.trim()
                 }
                 else -> actionResult = "Unknown action: $action"
             }
@@ -239,7 +239,11 @@ Step ${step + 1}/${aiService.maxStepsValue}. What is the next action?"""
                 when (recovery.action) {
                     "wait" -> delay(2000)
                     "press_back" -> ScreenAutomationService.pressBack()
-                    "scroll" -> ScreenAutomationService.scroll(recovery.params["direction"] ?: "down")
+                    "scroll" -> {
+                        val dir = recovery.params["direction"] ?: "down"
+                        if (dir == "down") ShizukuService.runCommand("input swipe 540 1800 540 600 600")
+                        else ShizukuService.runCommand("input swipe 540 600 540 1800 600")
+                    }
                     "press_home" -> ScreenAutomationService.pressHome()
                 }
                 results.add("Recovery step: ${recovery.description}")
@@ -257,7 +261,7 @@ Step ${step + 1}/${aiService.maxStepsValue}. What is the next action?"""
                 SkillMemoryService.saveSkill(context, userGoal, executedSteps)
                 ScreenAutomationService.showToast(context, "Task Complete!")
                 delay(4000)
-                return reasoning.ifEmpty { "Done." }
+                return if (reasoning.trim().isEmpty()) "Done." else reasoning.trim()
             }
         }
         results.add("Reached maximum steps. Task may be incomplete.")
@@ -267,6 +271,30 @@ Step ${step + 1}/${aiService.maxStepsValue}. What is the next action?"""
     }
 
     private fun report(msg: String) { onProgress?.invoke(msg) }
+
+    private suspend fun submitKeyboardAction(): Boolean {
+        if (ScreenAutomationService.pressEnter()) return true
+        if (!ShizukuService.checkAvailability()) return false
+        val result = ShizukuService.runCommand("input keyevent 66")
+        val n = result.lowercase()
+        return !n.contains("not running") && !n.contains("permission denied") && !n.startsWith("error")
+    }
+
+    private suspend fun performScroll(direction: String): Boolean {
+        if (ScreenAutomationService.scroll(direction)) return true
+        val down = direction.lowercase() == "down"
+        return performSwipe(540.0, if (down) 1800.0 else 600.0, 540.0, if (down) 600.0 else 1800.0)
+    }
+
+    private suspend fun performSwipe(sx: Double, sy: Double, ex: Double, ey: Double): Boolean {
+        if (ScreenAutomationService.swipe(sx.toFloat(), sy.toFloat(), ex.toFloat(), ey.toFloat())) return true
+        if (!ShizukuService.checkAvailability()) return false
+        val result = ShizukuService.runCommand(
+            "input swipe ${sx.toInt()} ${sy.toInt()} ${ex.toInt()} ${ey.toInt()} 600"
+        )
+        val n = result.lowercase()
+        return !n.contains("not running") && !n.contains("permission denied") && !n.startsWith("error")
+    }
 
     private suspend fun replaySkill(skill: SavedSkill, results: MutableList<String>): Boolean {
         for ((i, step) in skill.steps.withIndex()) {
@@ -281,9 +309,9 @@ Step ${step + 1}/${aiService.maxStepsValue}. What is the next action?"""
                 "click_text" -> { val t = step.params["text"] as? String ?: ""; success = ScreenAutomationService.clickByText(t); results.add("Memory Replay ${i+1}: Clicked \"$t\"") }
                 "click_at" -> { val x=(step.params["x"] as? Number)?.toFloat()?:0f; val y=(step.params["y"] as? Number)?.toFloat()?:0f; success = ScreenAutomationService.clickAt(x,y); results.add("Memory Replay ${i+1}: Clicked") }
                 "type_text" -> { val t = step.params["text"] as? String ?: ""; success = ScreenAutomationService.typeText(t, step.params["field_hint"] as? String); results.add("Memory Replay ${i+1}: Typed") }
-                "press_enter" -> { success = ScreenAutomationService.pressEnter(); results.add("Memory Replay ${i+1}: Enter") }
-                "swipe" -> { val sx=(step.params["startX"] as? Number)?.toFloat()?:540f; val sy=(step.params["startY"] as? Number)?.toFloat()?:2000f; val ex=(step.params["endX"] as? Number)?.toFloat()?:540f; val ey=(step.params["endY"] as? Number)?.toFloat()?:500f; success = ScreenAutomationService.swipe(sx,sy,ex,ey); results.add("Memory Replay ${i+1}: Swipe") }
-                "scroll" -> { val d = step.params["direction"] as? String ?: "down"; success = ScreenAutomationService.scroll(d); results.add("Memory Replay ${i+1}: Scroll") }
+                "press_enter" -> { success = submitKeyboardAction(); results.add("Memory Replay ${i+1}: ${if (success) "Submitted the focused search/form field" else "Could not submit the focused field"}") }
+                "swipe" -> { val sx=(step.params["startX"] as? Number)?.toDouble()?:540.0; val sy=(step.params["startY"] as? Number)?.toDouble()?:2000.0; val ex=(step.params["endX"] as? Number)?.toDouble()?:540.0; val ey=(step.params["endY"] as? Number)?.toDouble()?:500.0; success = performSwipe(sx,sy,ex,ey); results.add("Memory Replay ${i+1}: Swiped from ($sx,$sy) to ($ex,$ey)") }
+                "scroll" -> { val d = step.params["direction"] as? String ?: "down"; success = performScroll(d); results.add("Memory Replay ${i+1}: ${if (success) "Scrolled $d" else "Could not scroll $d"}") }
                 "press_back" -> { success = ScreenAutomationService.pressBack(); results.add("Memory Replay ${i+1}: Back") }
                 "press_home" -> { success = ScreenAutomationService.pressHome(); results.add("Memory Replay ${i+1}: Home") }
                 "open_app" -> { val an = step.params["app_name"] as? String ?: ""; val r = AppLauncherService.openApp(context, an); success = r.startsWith("Opened"); results.add("Memory Replay ${i+1}: $r") }

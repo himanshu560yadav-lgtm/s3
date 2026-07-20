@@ -1,5 +1,6 @@
 package com.panda.ai.api.ui
 
+import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -7,6 +8,9 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.panda.ai.api.R
 import com.panda.ai.api.models.ChatMessage
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class ChatAdapter : RecyclerView.Adapter<ChatAdapter.VH>() {
 
@@ -46,12 +50,37 @@ class ChatAdapter : RecyclerView.Adapter<ChatAdapter.VH>() {
     }
 
     override fun onBindViewHolder(holder: VH, position: Int) {
-        holder.text.text = messages[position].content
+        val msg = messages[position]
+        holder.text.text = msg.content
+        holder.time.text = formatTime(msg.timestamp)
+
+        val result = msg.actionResult
+        if (result != null) {
+            holder.chip.visibility = View.VISIBLE
+            val type = result.actionType.uppercase().replace("_", " ")
+            holder.chip.text = type
+            if (result.success) {
+                holder.chip.setTextColor(Color.parseColor("#16A34A"))
+                holder.chip.setBackgroundResource(R.drawable.bg_chip_success)
+            } else {
+                holder.chip.setTextColor(Color.parseColor("#DC2626"))
+                holder.chip.setBackgroundResource(R.drawable.bg_chip_failure)
+            }
+        } else {
+            holder.chip.visibility = View.GONE
+        }
     }
 
     override fun getItemCount(): Int = messages.size
 
+    private fun formatTime(ts: Long): String {
+        val sdf = SimpleDateFormat("HH:mm", Locale.getDefault())
+        return sdf.format(Date(ts))
+    }
+
     class VH(view: View) : RecyclerView.ViewHolder(view) {
         val text: TextView = view.findViewById(R.id.txtMessage)
+        val time: TextView = view.findViewById(R.id.txtTime)
+        val chip: TextView = view.findViewById(R.id.txtActionChip)
     }
 }

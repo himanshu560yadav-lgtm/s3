@@ -4,6 +4,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import androidx.core.app.NotificationCompat
+import com.panda.ai.api.R
 
 object NotificationService {
     private const val CHANNEL_ID = "task_completion_channel"
@@ -13,10 +14,11 @@ object NotificationService {
         val mgr = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val channel = NotificationChannel(CHANNEL_ID, "Task Completions", NotificationManager.IMPORTANCE_HIGH).apply {
             description = "Notifications for when a task completes"
+            enableVibration(true)
         }
         mgr.createNotificationChannel(channel)
         val notif = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setSmallIcon(R.drawable.ic_launcher)
             .setContentTitle(title)
             .setContentText(body)
             .setStyle(NotificationCompat.BigTextStyle().bigText(body))

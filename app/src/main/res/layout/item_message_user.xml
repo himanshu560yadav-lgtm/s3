@@ -14,11 +14,30 @@
         android:paddingVertical="12dp">
 
         <TextView
+            android:id="@+id/txtActionChip"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="5dp"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+
+        <TextView
             android:id="@+id/txtMessage"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textColor="@color/white"
             android:textSize="15sp"
-            android:lineSpacingExtra="4dp"/>
+            android:lineSpacingExtra="4dp" />
+
+        <TextView
+            android:id="@+id/txtTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textSize="11sp"
+            android:textColor="#99FFFFFF" />
     </LinearLayout>
 </FrameLayout>

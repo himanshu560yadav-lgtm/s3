@@ -15,6 +15,7 @@ object AppLauncherService {
         val match = apps.firstOrNull { it.loadLabel(pm).toString().equals(appName, true) }
             ?: apps.firstOrNull { it.loadLabel(pm).toString().contains(appName, true) }
         return if (match != null) {
+            val label = match.loadLabel(pm).toString()
             val launch = Intent(Intent.ACTION_MAIN).apply {
                 addCategory(Intent.CATEGORY_LAUNCHER)
                 `package` = match.activityInfo.packageName
@@ -22,7 +23,7 @@ object AppLauncherService {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
             context.startActivity(launch)
-            "Opened $appName"
+            "Opened $label"
         } else {
             "Could not find app: $appName"
         }
@@ -33,7 +34,7 @@ object AppLauncherService {
         return if (intent != null) {
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             context.startActivity(intent)
-            "Opened $packageName"
+            "Launched $packageName"
         } else "Could not open package: $packageName"
     }
 

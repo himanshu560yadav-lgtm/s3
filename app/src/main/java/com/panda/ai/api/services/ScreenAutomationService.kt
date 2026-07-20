@@ -122,7 +122,8 @@ class ScreenAutomationService : AccessibilityService() {
                 val cx = (b.left + b.right) / 2
                 val cy = (b.top + b.bottom) / 2
                 val boundsStr = " center:($cx,$cy)"
-                sb.appendLine("[$mark$type $label $tagStr$boundsStr".trim().replace(Regex("\\s+"), " "))
+                val line = "[${n.index}]$mark $type $label $tagStr$boundsStr"
+                sb.appendLine(line.replace(Regex("\\s+"), " "))
             }
             return sb.toString()
         }
