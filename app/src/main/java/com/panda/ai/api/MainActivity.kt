@@ -44,11 +44,11 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        aiService = AiService().apply { init(getPreferences(MODE_PRIVATE)) }
+        aiService = AiService().apply { init(appPrefs()) }
         actionHandler = ActionHandler(this)
         voiceService = VoiceService(this).apply { init() }
         telegramService = TelegramService(this) { chatId, cmd -> runOnUiThread { sendMessage(cmd, chatId) } }.apply {
-            init(getPreferences(MODE_PRIVATE))
+            init(appPrefs())
             start()
         }
 
@@ -234,7 +234,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        aiService.init(getPreferences(MODE_PRIVATE))
+        aiService.init(appPrefs())
         updateApiWarning()
     }
 

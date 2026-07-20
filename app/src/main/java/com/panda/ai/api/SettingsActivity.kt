@@ -34,8 +34,8 @@ class SettingsActivity : AppCompatActivity() {
         binding = ActivitySettingsBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        aiService = AiService().apply { init(getPreferences(MODE_PRIVATE)) }
-        telegramService = TelegramService(this) { _, _ -> }.apply { init(getPreferences(MODE_PRIVATE)) }
+        aiService = AiService().apply { init(appPrefs()) }
+        telegramService = TelegramService(this) { _, _ -> }.apply { init(appPrefs()) }
 
         binding.topBar.setNavigationOnClickListener { finish() }
 
@@ -80,7 +80,7 @@ class SettingsActivity : AppCompatActivity() {
                 disableMaxSteps = it; autoSave()
             }
             val maxStepsSlider = sliderRow("Maximum Steps Per Task", aiService.rawMaxSteps, 5, 50) {
-                aiService.saveMaxSteps(getPreferences(MODE_PRIVATE), it); autoSave()
+                aiService.saveMaxSteps(appPrefs(), it); autoSave()
             }
             maxTokensEdit = editText("Context Limit (Max Tokens)", "1024", aiService.currentMaxTokens.toString(), false)
             val tempSlider = sliderRow("Temperature", (aiService.currentTemperature * 100).toInt(), 0, 200) {
@@ -104,7 +104,7 @@ class SettingsActivity : AppCompatActivity() {
         c.addView(card("Telegram Remote Access", "Control your agent remotely") {
             telegramTokenEdit = editText("Telegram Bot Token", "123456:ABC-DEF...", telegramService.currentBotToken, true)
             val enSwitch = switchRow("Enable Telegram Bot", "Allows remote control via Telegram chat", telegramService.isEnabled) {
-                telegramService.saveSettings(getPreferences(MODE_PRIVATE), telegramTokenEdit.text.toString(), it)
+                telegramService.saveSettings(appPrefs(), telegramTokenEdit.text.toString(), it)
                 if (it) telegramService.start()
             }
             listOf(telegramTokenEdit, enSwitch)
@@ -148,9 +148,9 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     private fun autoSave() {
-        aiService.saveSettings(getPreferences(MODE_PRIVATE), apiKeyEdit.text.toString(), baseUrlEdit.text.toString(), modelEdit.text.toString())
-        aiService.saveAdvancedSettings(getPreferences(MODE_PRIVATE), temperature, maxTokensEdit.text.toString().toIntOrNull() ?: 1024, useScreenCompression, useSystemPrompt)
-        telegramService.saveSettings(getPreferences(MODE_PRIVATE), telegramTokenEdit.text.toString(), telegramService.isEnabled)
+        aiService.saveSettings(appPrefs(), apiKeyEdit.text.toString(), baseUrlEdit.text.toString(), modelEdit.text.toString())
+        aiService.saveAdvancedSettings(appPrefs(), temperature, maxTokensEdit.text.toString().toIntOrNull() ?: 1024, useScreenCompression, useSystemPrompt)
+        telegramService.saveSettings(appPrefs(), telegramTokenEdit.text.toString(), telegramService.isEnabled)
     }
 
     private fun fetchModels() {
@@ -250,7 +250,7 @@ class SettingsActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        aiService.init(getPreferences(MODE_PRIVATE))
+        aiService.init(appPrefs())
         buildUi()
     }
 }

@@ -26,13 +26,13 @@ class OnboardingActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_onboarding)
-        aiService = AiService().apply { init(getPreferences(MODE_PRIVATE)) }
+        aiService = AiService().apply { init(appPrefs()) }
 
         apiKeyEdit = EditText(this).apply { hint = "sk-..."; setBackgroundResource(R.drawable.bg_bubble_assistant); setPadding(30, 24, 30, 24) }
         baseUrlEdit = EditText(this).apply { setText("https://api.deepseek.com"); setBackgroundResource(R.drawable.bg_bubble_assistant); setPadding(30, 24, 30, 24) }
         modelEdit = EditText(this).apply { setText("deepseek-chat"); setBackgroundResource(R.drawable.bg_bubble_assistant); setPadding(30, 24, 30, 24) }
 
-        if (getPreferences(MODE_PRIVATE).getBoolean("onboarding_completed", false)) {
+        if (appPrefs().getBoolean("onboarding_completed", false)) {
             startActivity(Intent(this, MainActivity::class.java))
             finish()
             return
@@ -108,8 +108,8 @@ class OnboardingActivity : AppCompatActivity() {
             if (selectedProvider != "ollama" && selectedProvider != "local" && apiKeyEdit.text.toString().trim().isEmpty()) {
                 Toast.makeText(this, "API Key required", Toast.LENGTH_SHORT).show(); return@button
             }
-            aiService.saveSettings(getPreferences(MODE_PRIVATE), apiKeyEdit.text.toString(), base, model)
-            getPreferences(MODE_PRIVATE).edit().putBoolean("onboarding_completed", true).apply()
+            aiService.saveSettings(appPrefs(), apiKeyEdit.text.toString(), base, model)
+            appPrefs().edit().putBoolean("onboarding_completed", true).apply()
             Toast.makeText(this, "Launching PrivateAgent...", Toast.LENGTH_SHORT).show()
             startActivity(Intent(this, MainActivity::class.java))
             finish()
