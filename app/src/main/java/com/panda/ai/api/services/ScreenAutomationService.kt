@@ -16,7 +16,7 @@ class ScreenAutomationService : AccessibilityService() {
     override fun onServiceConnected() {
         super.onServiceConnected()
         serviceInfo = (serviceInfo ?: AccessibilityServiceInfo()).apply {
-            eventTypes = AccessibilityEvent.TYPE_ALL_MASK
+            eventTypes = -1
             feedbackType = AccessibilityServiceInfo.FEEDBACK_GENERIC
             flags = (flags
                 or AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS
