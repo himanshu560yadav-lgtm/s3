@@ -474,17 +474,22 @@ Answer questions, explain concepts, brainstorm, write emails/messages, and chat 
 
             if (isNvidiaBaseUrl(clean)) return@withContext filterNvidiaFreeModels(models)
             return@withContext models.sorted()
-        } catch (e: Exception) {
+            } catch (e: Exception) {
             // The response was not a JSON object (e.g. a top-level JSON array of models).
             try {
-                val arr = org.json.JSONArray(text)
+                val conn2 = URL("$clean/models").openConnection() as HttpURLConnection
+                conn2.requestMethod = "GET"
+                conn2.setRequestProperty("Authorization", "Bearer $apiKey")
+                conn2.connectTimeout = 30000
+                conn2.readTimeout = 30000
+                val body = if (conn2.responseCode in 200..299) conn2.inputStream.bufferedReader().readText() else ""
+                val arr = org.json.JSONArray(body)
                 val models = (0 until arr.length()).map { arr.getJSONObject(it).getString("id") }
                 if (isNvidiaBaseUrl(clean)) return@withContext filterNvidiaFreeModels(models)
                 return@withContext models.sorted()
-            } catch (e2: Exception) {
-                Log.e("AiService", "Error fetching models: $e")
-                emptyList()
-            }
+            } catch (_: Exception) {}
+            Log.e("AiService", "Error fetching models: $e")
+            return@withContext emptyList()
         }
     }
 }

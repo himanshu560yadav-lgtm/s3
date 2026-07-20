@@ -2,6 +2,8 @@ package com.panda.ai.api
 
 import android.Manifest
 import android.content.Intent
+import android.app.AlertDialog
+import android.content.DialogInterface
 import android.content.SharedPreferences
 import android.os.Build
 import android.os.Bundle
