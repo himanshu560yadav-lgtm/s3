@@ -455,41 +455,38 @@ Answer questions, explain concepts, brainstorm, write emails/messages, and chat 
     }
 
     suspend fun fetchAvailableModels(baseUrl: String, apiKey: String): List<String> = withContext(Dispatchers.IO) {
-        try {
-            var clean = baseUrl
-            if (clean.endsWith("/chat/completions")) clean = clean.replace("/chat/completions", "")
-            val conn = URL("$clean/models").openConnection() as HttpURLConnection
-            conn.requestMethod = "GET"
-            conn.setRequestProperty("Authorization", "Bearer $apiKey")
-            conn.connectTimeout = 30000
-            conn.readTimeout = 30000
-            val code = conn.responseCode
-            val text = if (code in 200..299) conn.inputStream.bufferedReader().readText()
-            else return@withContext emptyList()
-            val data = JSONObject(text)
-            val models = if (data.has("data")) {
-                val list = data.getJSONArray("data")
-                (0 until list.length()).map { list.getJSONObject(it).getString("id") }
-            } else emptyList()
-
-            if (isNvidiaBaseUrl(clean)) return@withContext filterNvidiaFreeModels(models)
-            return@withContext models.sorted()
-            } catch (e: Exception) {
-            // The response was not a JSON object (e.g. a top-level JSON array of models).
+        var clean = baseUrl
+        if (clean.endsWith("/chat/completions")) clean = clean.replace("/chat/completions", "")
+        fun fetch(): String? {
+            return try {
+                val conn = URL("$clean/models").openConnection() as HttpURLConnection
+                conn.requestMethod = "GET"
+                conn.setRequestProperty("Authorization", "Bearer $apiKey")
+                conn.connectTimeout = 30000
+                conn.readTimeout = 30000
+                if (conn.responseCode in 200..299) conn.inputStream.bufferedReader().readText() else null
+            } catch (_: Exception) { null }
+        }
+        val body = fetch()
+        if (body != null) {
             try {
-                val conn2 = URL("$clean/models").openConnection() as HttpURLConnection
-                conn2.requestMethod = "GET"
-                conn2.setRequestProperty("Authorization", "Bearer $apiKey")
-                conn2.connectTimeout = 30000
-                conn2.readTimeout = 30000
-                val body = if (conn2.responseCode in 200..299) conn2.inputStream.bufferedReader().readText() else ""
-                val arr = org.json.JSONArray(body)
-                val models = (0 until arr.length()).map { arr.getJSONObject(it).getString("id") }
+                val data = JSONObject(body)
+                val models = if (data.has("data")) {
+                    val list = data.getJSONArray("data")
+                    (0 until list.length()).map { list.getJSONObject(it).getString("id") }
+                } else emptyList()
                 if (isNvidiaBaseUrl(clean)) return@withContext filterNvidiaFreeModels(models)
                 return@withContext models.sorted()
-            } catch (_: Exception) {}
-            Log.e("AiService", "Error fetching models: $e")
-            return@withContext emptyList()
+            } catch (_: Exception) {
+                // top-level JSON array
+                try {
+                    val arr = org.json.JSONArray(body)
+                    val models = (0 until arr.length()).map { arr.getJSONObject(it).getString("id") }
+                    if (isNvidiaBaseUrl(clean)) return@withContext filterNvidiaFreeModels(models)
+                    return@withContext models.sorted()
+                } catch (_: Exception) {}
+            }
         }
+        return@withContext emptyList()
     }
 }
