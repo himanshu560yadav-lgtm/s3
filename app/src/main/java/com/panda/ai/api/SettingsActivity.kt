@@ -219,10 +219,10 @@ class SettingsActivity : AppCompatActivity() {
         return row
     }
 
-    private fun sliderRow(title: String, value: Int, min: Int, max: Int, onChange: (Int) -> Unit): android.view.View {
+    private fun sliderRow(title: String, value: Int, min: Int, maxVal: Int, onChange: (Int) -> Unit): android.view.View {
         val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         val label = TextView(this).apply { text = "$title: $value"; setPadding(0, 8, 0, 0) }
-        val slider = SeekBar(this).apply { progress = value - min; max = max - min; setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+        val slider = SeekBar(this).apply { progress = value - min; max = maxVal - min; setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(s: SeekBar?, p: Int, fromUser: Boolean) { label.text = "$title: ${p + min}"; onChange(p + min) }
             override fun onStartTrackingTouch(s: SeekBar?) {}
             override fun onStopTrackingTouch(s: SeekBar?) {}

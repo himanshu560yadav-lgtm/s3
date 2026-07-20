@@ -142,7 +142,7 @@ Rules:
                 ScreenAutomationService.getCompressedScreenDescription(userGoal)
             else ScreenAutomationService.getScreenDescription()
 
-            val prev = if (results.isNotEmpty()) "\nPREVIOUS ACTION RESULT: ${results.last}\n" else ""
+            val prev = if (results.isNotEmpty()) "\nPREVIOUS ACTION RESULT: ${results.last()}\n" else ""
             val failureHint = if (consecutiveFailures >= 3)
                 "\n\nWARNING: You have failed $consecutiveFailures times in a row. Try a completely different action." else ""
 

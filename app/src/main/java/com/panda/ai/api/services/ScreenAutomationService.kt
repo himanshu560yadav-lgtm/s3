@@ -15,7 +15,7 @@ class ScreenAutomationService : AccessibilityService() {
     override fun onServiceConnected() {
         super.onServiceConnected()
         serviceInfo = (serviceInfo ?: AccessibilityServiceInfo()).apply {
-            eventTypes = AccessibilityEventTypes
+            eventTypes = AccessibilityServiceInfo.TYPE_ALL_MASK
             feedbackType = AccessibilityServiceInfo.FEEDBACK_GENERIC
             flags = (flags
                 or AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS
@@ -142,8 +142,8 @@ class ScreenAutomationService : AccessibilityService() {
 
         fun scroll(direction: String): Boolean {
             instance ?: return false
-            val action = if (direction.lowercase() == "up") AccessibilityNodeInfo.ACTION_SCROLL_UP
-            else AccessibilityNodeInfo.ACTION_SCROLL_DOWN
+            val action = if (direction.lowercase() == "up") AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD
+            else AccessibilityNodeInfo.ACTION_SCROLL_FORWARD
             instance?.rootInActiveWindow?.performAction(action)
             return true
         }

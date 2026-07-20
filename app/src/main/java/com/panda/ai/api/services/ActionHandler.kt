@@ -34,6 +34,7 @@ class ActionHandler(private val context: Context) {
                     action.params["label"] as? String
                 )
                 "set_timer" -> result = AlarmService.setTimer(
+                    context,
                     (action.params["seconds"] as? Number)?.toInt() ?: 60,
                     action.params["label"] as? String
                 )

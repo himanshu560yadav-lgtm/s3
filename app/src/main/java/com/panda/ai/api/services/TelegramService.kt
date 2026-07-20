@@ -2,9 +2,12 @@ package com.panda.ai.api.services
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.net.Uri
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.net.HttpURLConnection
@@ -34,7 +37,7 @@ class TelegramService(
     fun start() {
         if (!isEnabled || botToken.isEmpty() || running) return
         running = true
-        kotlinx.coroutines.GlobalScope.launch(Dispatchers.IO) {
+        GlobalScope.launch(Dispatchers.IO) {
             while (running && isActive && isEnabled) {
                 try { pollUpdates() } catch (_: Exception) {}
                 delay(2000)
@@ -66,9 +69,9 @@ class TelegramService(
 
     fun sendMessage(text: String) {
         if (!isEnabled || botToken.isEmpty()) return
-        kotlinx.coroutines.GlobalScope.launch(Dispatchers.IO) {
+        GlobalScope.launch(Dispatchers.IO) {
             try {
-                val url = "https://api.telegram.org/bot$botToken/sendMessage?chat_id=me&text=${android.net.Uri.encode(text)}"
+                val url = "https://api.telegram.org/bot$botToken/sendMessage?chat_id=me&text=${Uri.encode(text)}"
                 val conn = URL(url).openConnection() as HttpURLConnection
                 conn.requestMethod = "GET"; conn.connectTimeout = 15000; conn.readTimeout = 15000
                 conn.responseCode
