@@ -15,6 +15,7 @@ class TelegramService(
     private val onCommand: suspend (String) -> Unit
 ) {
     private var botToken: String = ""
+    val currentBotToken: String get() = botToken
     var isEnabled: Boolean = false
     private var lastUpdateId: Long = 0
     private var running = false

@@ -10,8 +10,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.panda.ai.api.databinding.ActivitySettingsBinding
-import com.panda.ai.api.models.AiService
 import com.panda.ai.api.services.*
+import kotlinx.coroutines.runBlocking
 
 class SettingsActivity : AppCompatActivity() {
 
@@ -76,7 +76,7 @@ class SettingsActivity : AppCompatActivity() {
 
         // Tuning & Boundaries
         c.addView(card("Tuning & Boundaries", "Configure LLM agent parameters") {
-            val disableSwitch = switchRow("Disable Maximum Steps", "⚠️ Can cause infinite loops.", aiService.disableMaxSteps) {
+            val disableSwitch = switchRow("Disable Maximum Steps", "⚠️ Can cause infinite loops.", aiService.currentDisableMaxSteps) {
                 disableMaxSteps = it; autoSave()
             }
             val maxStepsSlider = sliderRow("Maximum Steps Per Task", aiService.rawMaxSteps, 5, 50) {
@@ -102,7 +102,7 @@ class SettingsActivity : AppCompatActivity() {
 
         // Telegram
         c.addView(card("Telegram Remote Access", "Control your agent remotely") {
-            telegramTokenEdit = editText("Telegram Bot Token", "123456:ABC-DEF...", telegramService.botToken, true)
+            telegramTokenEdit = editText("Telegram Bot Token", "123456:ABC-DEF...", telegramService.currentBotToken, true)
             val enSwitch = switchRow("Enable Telegram Bot", "Allows remote control via Telegram chat", telegramService.isEnabled) {
                 telegramService.saveSettings(getPreferences(MODE_PRIVATE), telegramTokenEdit.text.toString(), it)
                 if (it) telegramService.start()
@@ -159,7 +159,7 @@ class SettingsActivity : AppCompatActivity() {
         if (base.isEmpty() || key.isEmpty()) { Toast.makeText(this, "Enter Base URL and API Key first", Toast.LENGTH_SHORT).show(); return }
         Toast.makeText(this, "Fetching models...", Toast.LENGTH_SHORT).show()
         Thread {
-            val models = aiService.fetchAvailableModels(base, key)
+            val models = runBlocking { aiService.fetchAvailableModels(base, key) }
             runOnUiThread {
                 if (models.isEmpty()) { Toast.makeText(this, "No models found", Toast.LENGTH_SHORT).show(); return@runOnUiThread }
                 val items = models.toTypedArray()
@@ -211,11 +211,11 @@ class SettingsActivity : AppCompatActivity() {
 
     private fun switchRow(title: String, subtitle: String, checked: Boolean, onChange: (Boolean) -> Unit): android.view.View {
         val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = android.view.Gravity.CENTER_VERTICAL }
-        val text = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f) }
-        text.addView(TextView(this).apply { text = title })
-        text.addView(TextView(this).apply { text = subtitle; textSize = 12f })
+        val textCol = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f) }
+        textCol.addView(TextView(this).apply { text = title })
+        textCol.addView(TextView(this).apply { text = subtitle; textSize = 12f })
         val sw = Switch(this).apply { isChecked = checked; setOnCheckedChangeListener { _, b -> onChange(b) } }
-        row.addView(text); row.addView(sw)
+        row.addView(textCol); row.addView(sw)
         return row
     }
 

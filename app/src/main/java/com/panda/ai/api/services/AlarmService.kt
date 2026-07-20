@@ -10,9 +10,8 @@ import java.util.Calendar
 object AlarmService {
 
     fun setAlarm(context: Context, hour: Int, minute: Int, label: String?): String {
-        val alarmMgr = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val cal = Calendar.getInstance().apply { set(Calendar.HOUR_OF_DAY, hour); set(Calendar.MINUTE, minute); set(Calendar.SECOND, 0) }
-        val intent = Intent(Intent.ACTION_SET_ALARM).apply {
+        val intent = Intent(android.provider.AlarmClock.ACTION_SET_ALARM).apply {
             putExtra(android.provider.AlarmClock.EXTRA_HOUR, hour)
             putExtra(android.provider.AlarmClock.EXTRA_MINUTES, minute)
             putExtra(android.provider.AlarmClock.EXTRA_MESSAGE, label ?: "PrivateAgent Alarm")
@@ -22,7 +21,7 @@ object AlarmService {
         catch (e: Exception) { "Could not set alarm: $e" }
     }
 
-    fun setTimer(seconds: Int, label: String?): String {
+    fun setTimer(context: Context, seconds: Int, label: String?): String {
         val intent = Intent(android.provider.AlarmClock.ACTION_SET_TIMER).apply {
             putExtra(android.provider.AlarmClock.EXTRA_LENGTH, seconds)
             putExtra(android.provider.AlarmClock.EXTRA_MESSAGE, label ?: "PrivateAgent Timer")

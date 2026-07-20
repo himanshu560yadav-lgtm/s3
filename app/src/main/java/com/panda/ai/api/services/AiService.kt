@@ -159,6 +159,7 @@ Answer questions, explain concepts, brainstorm, write emails/messages, and chat 
     val currentModel: String get() = model
     val currentApiKey: String get() = apiKey ?: ""
     val rawMaxSteps: Int get() = maxSteps
+    val currentDisableMaxSteps: Boolean get() = disableMaxSteps
     val maxStepsValue: Int get() = if (disableMaxSteps) 999 else maxSteps
     val currentTemperature: Double get() = temperature
     val currentMaxTokens: Int get() = maxTokens
@@ -259,7 +260,7 @@ Answer questions, explain concepts, brainstorm, write emails/messages, and chat 
         if (assistant.trim().isEmpty()) throw Exception("API returned an empty response. This may be due to rate limits or API instability.")
 
         conversationHistory.add("assistant" to assistant)
-        return assistant
+        assistant
     }
 
     // Streaming

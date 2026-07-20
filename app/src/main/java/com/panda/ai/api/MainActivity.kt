@@ -52,7 +52,7 @@ class MainActivity : AppCompatActivity() {
             start()
         }
 
-        adapter = ChatAdapter(markwon)
+        adapter = ChatAdapter()
         binding.chatList.layoutManager = LinearLayoutManager(this)
         binding.chatList.adapter = adapter
 

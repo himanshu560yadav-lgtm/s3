@@ -5,11 +5,12 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Build
 import android.os.Bundle
+import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import com.panda.ai.api.models.AiService
+import com.panda.ai.api.services.AiService
 import com.panda.ai.api.services.ScreenAutomationService
 
 class OnboardingActivity : AppCompatActivity() {
