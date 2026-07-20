@@ -15,7 +15,7 @@ import java.net.URL
 
 class TelegramService(
     private val context: Context,
-    private val onCommand: suspend (String) -> Unit
+    private val onCommand: suspend (Long, String) -> Unit
 ) {
     private var botToken: String = ""
     val currentBotToken: String get() = botToken
@@ -24,14 +24,14 @@ class TelegramService(
     private var running = false
 
     fun init(prefs: SharedPreferences) {
-        botToken = prefs.getString("telegram_token", "") ?: ""
+        botToken = prefs.getString("telegram_bot_token", "") ?: ""
         isEnabled = prefs.getBoolean("telegram_enabled", false)
     }
 
     fun saveSettings(prefs: SharedPreferences, token: String, enabled: Boolean) {
         botToken = token.trim()
         isEnabled = enabled
-        prefs.edit().putString("telegram_token", botToken).putBoolean("telegram_enabled", enabled).apply()
+        prefs.edit().putString("telegram_bot_token", botToken).putBoolean("telegram_enabled", enabled).apply()
     }
 
     fun start() {
@@ -63,15 +63,19 @@ class TelegramService(
             lastUpdateId = upd.optLong("update_id", lastUpdateId)
             val msg = upd.optJSONObject("message") ?: continue
             val textMsg = msg.optString("text", "")
-            if (textMsg.isNotEmpty()) onCommand(textMsg)
+            val chatId = msg.optJSONObject("chat")?.optLong("id") ?: continue
+            if (textMsg.isNotEmpty()) {
+                sendMessage(chatId, "🤖 Received: \"$textMsg\". Working on it...")
+                onCommand(chatId, textMsg)
+            }
         }
     }
 
-    fun sendMessage(text: String) {
+    fun sendMessage(chatId: Long, text: String) {
         if (!isEnabled || botToken.isEmpty()) return
         GlobalScope.launch(Dispatchers.IO) {
             try {
-                val url = "https://api.telegram.org/bot$botToken/sendMessage?chat_id=me&text=${Uri.encode(text)}"
+                val url = "https://api.telegram.org/bot$botToken/sendMessage?chat_id=$chatId&text=${Uri.encode(text)}"
                 val conn = URL(url).openConnection() as HttpURLConnection
                 conn.requestMethod = "GET"; conn.connectTimeout = 15000; conn.readTimeout = 15000
                 conn.responseCode

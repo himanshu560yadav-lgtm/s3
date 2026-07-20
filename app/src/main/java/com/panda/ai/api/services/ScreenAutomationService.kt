@@ -47,27 +47,108 @@ class ScreenAutomationService : AccessibilityService() {
         }
 
         fun getScreenDescription(): String {
-            val root = instance?.rootInActiveWindow ?: return "No screen data"
+            val root = instance?.rootInActiveWindow ?: return "Could not read screen. Make sure accessibility service is enabled."
+            val nodes = mutableListOf<NodeInfo>()
+            collect(root, nodes, 0)
+            if (nodes.isEmpty()) return "Could not read screen. Make sure accessibility service is enabled."
             val sb = StringBuilder()
-            traverse(root, sb, 0)
+            val pkg = getCurrentPackage()
+            if (pkg.isNotEmpty()) sb.appendLine("Current app: $pkg")
+            sb.appendLine("Screen elements:")
+            var count = 0
+            for (n in nodes) {
+                val display = n.text.ifEmpty { n.desc }
+                if (display.isEmpty() && !n.clickable && !n.editable && !n.scrollable) continue
+                var d = display
+                if (d.length > 200) d = d.substring(0, 200) + "..."
+                val tags = mutableListOf<String>()
+                if (n.clickable) tags.add("clickable")
+                if (n.editable) tags.add("editable")
+                if (n.scrollable) tags.add("scrollable")
+                val label = if (d.isNotEmpty()) "\"$d\"" else "(no text)"
+                val type = if (n.cls.isNotEmpty()) "[${n.cls}]" else ""
+                val tagStr = if (tags.isNotEmpty()) "{${tags.joinToString(", ")}}" else ""
+                val b = n.bounds
+                val cx = (b.left + b.right) / 2
+                val cy = (b.top + b.bottom) / 2
+                val boundsStr = " bounds:[${b.left},${b.top},${b.right},${b.bottom}] center:($cx,$cy)"
+                sb.appendLine("  [${n.index}] $type $label $tagStr$boundsStr")
+                count++
+            }
             return sb.toString()
         }
 
-        fun getCompressedScreenDescription(goal: String): String = getScreenDescription()
+        fun getCompressedScreenDescription(goal: String): String {
+            val root = instance?.rootInActiveWindow ?: return "Could not read screen. Make sure accessibility service is enabled."
+            val nodes = mutableListOf<NodeInfo>()
+            collect(root, nodes, 0)
+            if (nodes.isEmpty()) return "Could not read screen. Make sure accessibility service is enabled."
+            val sb = StringBuilder()
+            val pkg = getCurrentPackage()
+            if (pkg.isNotEmpty()) sb.appendLine("APP: $pkg")
 
-        private fun traverse(node: AccessibilityNodeInfo?, sb: StringBuilder, depth: Int) {
-            if (node == null || sb.length > 8000) return
-            val cls = node.className?.toString() ?: ""
-            val text = node.text?.toString()
-            val desc = node.contentDescription?.toString()
-            val label = text ?: desc
-            if (label != null && label.isNotEmpty()) {
-                val bounds = android.graphics.Rect()
-                node.getBoundsInScreen(bounds)
-                val center = "(${(bounds.left + bounds.right) / 2}, ${(bounds.top + bounds.bottom) / 2})"
-                sb.append("${"-".repeat(depth.coerceAtMost(4))} [$cls] \"$label\" @ $center\n")
+            val stopWords = setOf("to", "and", "the", "a", "in", "of", "for", "on", "with", "at", "by", "from", "go", "turn", "open")
+            val keywords = goal.lowercase().replace(Regex("[^a-z0-9\\s]"), " ")
+                .split(Regex("\\s+")).filter { it.isNotEmpty() && it !in stopWords }
+
+            for (n in nodes) {
+                val display = n.text.ifEmpty { n.desc }
+                val lower = display.lowercase()
+                if (lower.contains("battery") || lower.contains("percent") ||
+                    lower.contains("do not disturb") || lower.contains("three bars") ||
+                    lower == "stop macro" || Regex("^\\d{1,2}:\\d{2}$").matches(lower)) continue
+                if (display.isEmpty() && !n.clickable && !n.editable && !n.scrollable) continue
+
+                var d = display
+                if (d.length > 50) d = d.substring(0, 50) + "..."
+                val tags = mutableListOf<String>()
+                if (n.clickable) tags.add("tap")
+                if (n.editable) tags.add("edit")
+                if (n.scrollable) tags.add("scroll")
+                var type = n.cls.substringAfterLast('.').lowercase()
+                when (type) {
+                    "textview" -> type = "text"
+                    "button" -> type = "btn"
+                    "switch" -> type = "toggle"
+                    "imageview" -> type = "img"
+                    "edittext" -> type = "input"
+                    "framelayout", "linearlayout" -> type = "view"
+                }
+                val label = if (d.isNotEmpty()) "\"$d\"" else ""
+                val tagStr = if (tags.isNotEmpty()) "[${tags.joinToString(",")}]" else ""
+                val isTarget = d.isNotEmpty() && keywords.any { lower.contains(it) }
+                val mark = if (isTarget) "*" else ""
+                val b = n.bounds
+                val cx = (b.left + b.right) / 2
+                val cy = (b.top + b.bottom) / 2
+                val boundsStr = " center:($cx,$cy)"
+                sb.appendLine("[$mark$type $label $tagStr$boundsStr".trim().replace(Regex("\\s+"), " "))
             }
-            for (i in 0 until node.childCount) traverse(node.getChild(i), sb, depth + 1)
+            return sb.toString()
+        }
+
+        private data class NodeInfo(
+            val index: Int, val cls: String, val text: String, val desc: String,
+            val clickable: Boolean, val editable: Boolean, val scrollable: Boolean,
+            val bounds: android.graphics.Rect
+        )
+
+        private fun collect(node: AccessibilityNodeInfo?, out: MutableList<NodeInfo>, index: Int) {
+            if (node == null) return
+            val b = android.graphics.Rect()
+            node.getBoundsInScreen(b)
+            out.add(NodeInfo(
+                index = index,
+                cls = node.className?.toString() ?: "",
+                text = node.text?.toString() ?: "",
+                desc = node.contentDescription?.toString() ?: "",
+                clickable = node.isClickable,
+                editable = node.isEditable,
+                scrollable = node.isScrollable,
+                bounds = b
+            ))
+            var i = 0
+            while (i < node.childCount) { collect(node.getChild(i), out, i); i++ }
         }
 
         fun clickByText(text: String): Boolean {

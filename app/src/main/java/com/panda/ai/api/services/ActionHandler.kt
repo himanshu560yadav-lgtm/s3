@@ -22,9 +22,16 @@ class ActionHandler(private val context: Context) {
                     action.params["phone_number"] as? String
                 )
                 "send_sms" -> result = CommunicationService.sendSms(
+                    context,
                     action.params["contact_name"] as? String,
                     action.params["phone_number"] as? String,
                     action.params["message"] as? String ?: ""
+                )
+                "send_email" -> result = CommunicationService.sendEmail(
+                    context,
+                    action.params["to"] as? String ?: "",
+                    action.params["subject"] as? String,
+                    action.params["body"] as? String
                 )
                 "search_contact" -> result = ContactsService.searchAndFormat(context, action.params["query"] as? String ?: "")
                 "set_alarm" -> result = AlarmService.setAlarm(

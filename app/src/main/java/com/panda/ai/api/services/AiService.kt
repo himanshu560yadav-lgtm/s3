@@ -196,7 +196,7 @@ Answer questions, explain concepts, brainstorm, write emails/messages, and chat 
     private fun resolveUrl(): String {
         var url = baseUrl
         url = if (url.endsWith("/chat/completions")) url
-        else if (url.endsWith("/")) "$url chat/completions".replace(" ", "")
+        else if (url.endsWith("/")) "$url" + "chat/completions"
         else "$url/chat/completions"
         return url
     }

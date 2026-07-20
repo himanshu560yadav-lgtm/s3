@@ -47,7 +47,7 @@ class MainActivity : AppCompatActivity() {
         aiService = AiService().apply { init(getPreferences(MODE_PRIVATE)) }
         actionHandler = ActionHandler(this)
         voiceService = VoiceService(this).apply { init() }
-        telegramService = TelegramService(this) { cmd -> runOnUiThread { sendMessage(cmd) } }.apply {
+        telegramService = TelegramService(this) { chatId, cmd -> runOnUiThread { sendMessage(cmd, chatId) } }.apply {
             init(getPreferences(MODE_PRIVATE))
             start()
         }
@@ -112,7 +112,7 @@ class MainActivity : AppCompatActivity() {
         ChatHistoryService.saveSession(this, session)
     }
 
-    private fun sendMessage(text: String) {
+    private fun sendMessage(text: String, telegramChatId: Long? = null) {
         if (text.trim().isEmpty()) return
         val userMsg = ChatMessage("user", text.trim())
         messages.add(userMsg)
@@ -146,11 +146,12 @@ class MainActivity : AppCompatActivity() {
                 saveSession()
 
                 val accumulated = messages[assistantIdx].content
+                telegramChatId?.let { telegramService.sendMessage(it, accumulated) }
                 val action = aiService.parseAction(accumulated)
                 if (action != null) {
                     messages.removeAt(assistantIdx)
                     adapter.removeLast()
-                    handleAction(action)
+                    handleAction(action, telegramChatId)
                 } else {
                     voiceService.speak(accumulated)
                 }
@@ -166,18 +167,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun showError(msg: String) {
-        runOnUiThread {
-            if (messages.isNotEmpty()) messages.removeAt(messages.lastIndex)
-            adapter.removeLast()
-            messages.add(ChatMessage("assistant", "Error: $msg"))
-            adapter.addMessage(messages.last())
-            isLoading = false
-            binding.thinking.visibility = android.view.View.GONE
-        }
-    }
-
-    private fun handleAction(action: AgentAction) {
+    private fun handleAction(action: AgentAction, telegramChatId: Long? = null) {
         scope.launch {
             val result = actionHandler.execute(action, aiService = aiService) { progress ->
                 runOnUiThread {
@@ -187,9 +177,11 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             runOnUiThread {
-                messages.add(ChatMessage("assistant", formatActionResult(action, result), actionResult = result))
+                val formatted = formatActionResult(action, result)
+                messages.add(ChatMessage("assistant", formatted, actionResult = result))
                 adapter.addMessage(messages.last())
                 scrollBottom()
+                telegramChatId?.let { telegramService.sendMessage(it, formatted) }
                 if (action.action != "execute_task") {
                     NotificationService.showTaskCompleteNotification(
                         this@MainActivity,
@@ -199,6 +191,17 @@ class MainActivity : AppCompatActivity() {
                 }
                 saveSession()
             }
+        }
+    }
+
+    private fun showError(msg: String) {
+        runOnUiThread {
+            if (messages.isNotEmpty()) messages.removeAt(messages.lastIndex)
+            adapter.removeLast()
+            messages.add(ChatMessage("assistant", "Error: $msg"))
+            adapter.addMessage(messages.last())
+            isLoading = false
+            binding.thinking.visibility = android.view.View.GONE
         }
     }
 
